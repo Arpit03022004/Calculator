@@ -22,10 +22,27 @@ app.use(express.json());
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'Index.html'));
 });
+// SERVERLESS DATABASE CONNECTION
+const connectDB = async () => {
+    // If already connected, skip reconnecting to save time
+    if (mongoose.connection.readyState >= 1) return;
+    
+    // Connect using your Vercel environment variable
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("MongoDB Connected Successfully");
+};
 
-
-mongoose.connect(process.env.MONGO_URI).then(()=> console.log("Successfully connected to db"))
-.catch((err)=> console.log("Error is " , err)) ;
+// Force the DB to connect BEFORE processing any routes
+app.use(async (req, res, next) => {
+    try {
+        await connectDB();
+        next();
+    } catch (error) {
+        console.log("DB Connection Error:", error.message);
+        // Instantly rejects the request if the DB fails, preventing 10s timeouts
+        return res.status(500).json({ error: "Database connection failed. Check Vercel MONGO_URI." });
+    }
+});
 
 
 app.listen(3000 , ()=> {
