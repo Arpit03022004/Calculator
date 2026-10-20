@@ -89,6 +89,7 @@
         </div>
     </div>
 
+
     <script>
         // State variables
         let isLoginMode = true;
@@ -267,5 +268,153 @@
             }
         });
     </script>
+
+    <!-- The Visual Interface -->
+<input type="number" id="num1" placeholder="First Number">
+<input type="number" id="num2" placeholder="Second Number">
+
+<button onclick="calculate('add')">Add</button>
+<button onclick="calculate('subtract')">Subtract</button>
+<button onclick="calculate('multiply')">Multiply</button>
+<button onclick="calculate('division')">Divide</button>
+
+<h3 id="result-display">Result: </h3>
+
+<!-- The Connection Logic -->
+<script>
+  async function calculate(operation) {
+    // 1. Grab the actual numbers the user typed
+    const a = document.getElementById('num1').value;
+    const b = document.getElementById('num2').value;
+
+    // 2. Build the API URL. 
+    // Because your HTML and backend share the same Vercel link, we can use a relative path.
+    const url = `/calculate/${operation}?a=${a}&b=${b}`;
+
+    try {
+      // 3. Send the HTTP GET request to your Express server
+      const response = await fetch(url);
+      
+      // 4. Wait for the server to reply and extract the text
+      let data = await response.text(); 
+      
+      // 5. Inject the final answer back into the HTML page
+      document.getElementById('result-display').innerText = `Result: ${data}`;
+      
+    } catch (error) {
+      console.error("Calculation failed:", error);
+      document.getElementById('result-display').innerText = "Error connecting to server";
+    }
+  }
+</script>
+<script>
+    // 1. REGISTRATION
+    async function register() {
+        const u = document.getElementById('username').value;
+        const p = document.getElementById('password').value;
+        const msg = document.getElementById('auth-message');
+        
+        try {
+            const res = await fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: u, password: p })
+            });
+            const data = await res.json();
+            msg.innerText = res.ok ? "Registered successfully! You can now login." : `Error: ${data.error}`;
+        } catch (err) { msg.innerText = "Server connection failed."; }
+    }
+
+    // 2. LOGIN
+    async function login() {
+        const u = document.getElementById('username').value;
+        const p = document.getElementById('password').value;
+        const msg = document.getElementById('auth-message');
+        
+        try {
+            const res = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: u, password: p })
+            });
+            const data = await res.json();
+            
+            if (res.ok) {
+                // Save JWT to local storage securely
+                localStorage.setItem('token', data.token);
+                document.getElementById('auth-section').classList.add('hidden');
+                document.getElementById('calc-section').classList.remove('hidden');
+                fetchHistory(); // Load previous calculations right away
+            } else {
+                msg.innerText = `Error: ${data.message}`;
+            }
+        } catch (err) { msg.innerText = "Server connection failed."; }
+    }
+
+    // 3. SECURE CALCULATION (Hits your /math POST route)
+    async function calculateSecure(operation) {
+        const a = document.getElementById('num1').value;
+        const b = document.getElementById('num2').value;
+        const token = localStorage.getItem('token');
+        const display = document.getElementById('result-display');
+        
+        try {
+            const res = await fetch('/math', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify({ a: a, b: b, operation: operation })
+            });
+            const data = await res.json();
+            
+            if (res.ok) {
+                display.innerText = `Answer: ${data.result || (data.quotient !== undefined ? `${data.quotient} (Rem:${data.remainder})` : data.result)}`;
+                fetchHistory(); // Refresh the history list
+            } else {
+                display.innerText = `Error: ${data.error || 'Check inputs'}`;
+            }
+        } catch (err) { display.innerText = "Server connection failed."; }
+    }
+
+    // 4. FETCH HISTORY
+    async function fetchHistory() {
+        const token = localStorage.getItem('token');
+        const historyList = document.getElementById('history-list');
+        
+        try {
+            const res = await fetch('/history', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            
+            if (res.ok && data.history) {
+                historyList.innerHTML = data.history.map(item => 
+                    `<div class="history-item">${item.num1} ${item.operation} ${item.num2} = <b>${item.result}</b></div>`
+                ).join('');
+            }
+        } catch (err) { console.error("Could not load history"); }
+    }
+
+    // 5. LOGOUT
+    function logout() {
+        localStorage.removeItem('token');
+        document.getElementById('calc-section').classList.add('hidden');
+        document.getElementById('auth-section').classList.remove('hidden');
+        document.getElementById('username').value = '';
+        document.getElementById('password').value = '';
+        document.getElementById('auth-message').innerText = '';
+    }
+
+    // Check if already logged in on page load
+    window.onload = () => {
+        if (localStorage.getItem('token')) {
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('calc-section').classList.remove('hidden');
+            fetchHistory();
+        }
+    }
+</script>
 </body>
 </html>
