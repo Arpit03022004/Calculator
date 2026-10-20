@@ -8,7 +8,7 @@ const User = require('./models/User');
 const CalcHistory = require('./models/CalcHistory');
 
 
-const secretkey = "Arpit-Secret-Key" ;
+const secretkey = process.env.JWT_SECRET ;
 
 
 
@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-mongoose.connect('mongodb://127.0.0.1:27017/calculatorApp').then(()=> console.log("Successfully connected to db"))
+mongoose.connect(process.env.MONGO_URI).then(()=> console.log("Successfully connected to db"))
 .catch((err)=> console.log("Error is " , err)) ;
 
 

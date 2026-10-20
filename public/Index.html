@@ -18,7 +18,7 @@
         <!-- Notification Banner -->
         <div id="notification" class="hidden p-4 mb-4 rounded-lg text-center font-semibold"></div>
 
-        <!-- Auth Section (Visible when logged out) -->
+        <!-- Auth Section -->
         <div id="authSection" class="bg-white p-8 rounded-lg shadow-md max-w-md mx-auto">
             <h2 class="text-xl font-bold mb-4" id="authTitle">Login</h2>
             <form id="authForm" class="space-y-4">
@@ -38,7 +38,7 @@
             </p>
         </div>
 
-        <!-- App Section (Visible when logged in) -->
+        <!-- App Section -->
         <div id="appSection" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
             
             <!-- Calculator -->
@@ -64,7 +64,7 @@
                             <option value="division">Division (/)</option>
                         </select>
                     </div>
-                    <button type="submit" class="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 font-bold">Calculate (POST /math)</button>
+                    <button type="submit" class="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 font-bold">Calculate</button>
                 </form>
                 
                 <div class="mt-6 p-4 bg-gray-50 border rounded text-center">
@@ -79,7 +79,6 @@
                     <h2 class="text-xl font-bold">History</h2>
                     <div class="space-x-2">
                         <button id="refreshHistoryBtn" class="text-sm bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded">Refresh</button>
-                        <button id="clearHistoryBtn" class="text-sm bg-red-100 text-red-600 hover:bg-red-200 px-3 py-1 rounded font-semibold">Clear</button>
                     </div>
                 </div>
                 <div id="historyList" class="flex-1 overflow-y-auto space-y-2 max-h-80">
@@ -89,33 +88,27 @@
         </div>
     </div>
 
-
     <script>
-        // State variables
         let isLoginMode = true;
         let token = localStorage.getItem('calc_token');
 
-        // DOM Elements
         const authSection = document.getElementById('authSection');
         const appSection = document.getElementById('appSection');
         const logoutBtn = document.getElementById('logoutBtn');
         const notification = document.getElementById('notification');
         const historyList = document.getElementById('historyList');
 
-        // Check login status on load
         if (token) {
             showApp();
             fetchHistory();
         }
 
-        // Show Notification
         function showNotification(msg, isError = false) {
             notification.textContent = msg;
             notification.className = `p-4 mb-4 rounded-lg text-center font-semibold block ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
             setTimeout(() => notification.className = 'hidden', 3000);
         }
 
-        // Toggle Login/Register
         document.getElementById('toggleAuthMode').addEventListener('click', (e) => {
             e.preventDefault();
             isLoginMode = !isLoginMode;
@@ -124,7 +117,6 @@
             e.target.textContent = isLoginMode ? 'Register here' : 'Login here';
         });
 
-        // Handle Auth Submit
         document.getElementById('authForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('username').value;
@@ -148,7 +140,6 @@
                     showApp();
                     fetchHistory();
                 } else {
-                    // Switch to login mode after successful registration
                     document.getElementById('toggleAuthMode').click(); 
                 }
             } catch (err) {
@@ -156,7 +147,6 @@
             }
         });
 
-        // Handle Logout
         logoutBtn.addEventListener('click', () => {
             token = null;
             localStorage.removeItem('calc_token');
@@ -172,7 +162,6 @@
             logoutBtn.classList.remove('hidden');
         }
 
-        // Handle Calculation POST
         document.getElementById('calcForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const a = document.getElementById('numA').value;
@@ -184,7 +173,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` // JWT goes here
+                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({ a, b, operation })
                 });
@@ -193,21 +182,19 @@
                 
                 if (!res.ok) throw new Error(data.error || 'Calculation failed');
 
-                // Display result (handle division object vs scalar result)
                 if (typeof data.result === 'object' && data.result !== null) {
                     document.getElementById('calcResult').textContent = `Q: ${data.result.quotient}, R: ${data.result.remainder}`;
                 } else {
                     document.getElementById('calcResult').textContent = data.result;
                 }
                 
-                fetchHistory(); // Automatically refresh history
+                fetchHistory();
             } catch (err) {
                 showNotification(err.message, true);
                 document.getElementById('calcResult').textContent = 'Error';
             }
         });
 
-        // Fetch and display history
         async function fetchHistory() {
             try {
                 const res = await fetch('/history', {
@@ -241,180 +228,12 @@
             } catch (err) {
                 console.error(err);
                 if (err.message.includes('NO token') || err.message.includes('cant verify')) {
-                    logoutBtn.click(); // Auto logout if token is bad or expired
+                    logoutBtn.click();
                 }
             }
         }
 
-        // Refresh History Button
         document.getElementById('refreshHistoryBtn').addEventListener('click', fetchHistory);
-
-        // Clear History Button
-        document.getElementById('clearHistoryBtn').addEventListener('click', async () => {
-            try {
-                const res = await fetch('/history', {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-
-                if (!res.ok) throw new Error(data.error || 'Failed to clear history');
-
-                showNotification(data.message);
-                document.getElementById('calcResult').textContent = '-';
-                fetchHistory(); // Refresh list to show "No calculations yet."
-            } catch (err) {
-                showNotification(err.message, true);
-            }
-        });
     </script>
-
-    <!-- The Visual Interface -->
-<input type="number" id="num1" placeholder="First Number">
-<input type="number" id="num2" placeholder="Second Number">
-
-<button onclick="calculate('add')">Add</button>
-<button onclick="calculate('subtract')">Subtract</button>
-<button onclick="calculate('multiply')">Multiply</button>
-<button onclick="calculate('division')">Divide</button>
-
-<h3 id="result-display">Result: </h3>
-
-<!-- The Connection Logic -->
-<script>
-  async function calculate(operation) {
-    // 1. Grab the actual numbers the user typed
-    const a = document.getElementById('num1').value;
-    const b = document.getElementById('num2').value;
-
-    // 2. Build the API URL. 
-    // Because your HTML and backend share the same Vercel link, we can use a relative path.
-    const url = `/calculate/${operation}?a=${a}&b=${b}`;
-
-    try {
-      // 3. Send the HTTP GET request to your Express server
-      const response = await fetch(url);
-      
-      // 4. Wait for the server to reply and extract the text
-      let data = await response.text(); 
-      
-      // 5. Inject the final answer back into the HTML page
-      document.getElementById('result-display').innerText = `Result: ${data}`;
-      
-    } catch (error) {
-      console.error("Calculation failed:", error);
-      document.getElementById('result-display').innerText = "Error connecting to server";
-    }
-  }
-</script>
-<script>
-    // 1. REGISTRATION
-    async function register() {
-        const u = document.getElementById('username').value;
-        const p = document.getElementById('password').value;
-        const msg = document.getElementById('auth-message');
-        
-        try {
-            const res = await fetch('/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: u, password: p })
-            });
-            const data = await res.json();
-            msg.innerText = res.ok ? "Registered successfully! You can now login." : `Error: ${data.error}`;
-        } catch (err) { msg.innerText = "Server connection failed."; }
-    }
-
-    // 2. LOGIN
-    async function login() {
-        const u = document.getElementById('username').value;
-        const p = document.getElementById('password').value;
-        const msg = document.getElementById('auth-message');
-        
-        try {
-            const res = await fetch('/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: u, password: p })
-            });
-            const data = await res.json();
-            
-            if (res.ok) {
-                // Save JWT to local storage securely
-                localStorage.setItem('token', data.token);
-                document.getElementById('auth-section').classList.add('hidden');
-                document.getElementById('calc-section').classList.remove('hidden');
-                fetchHistory(); // Load previous calculations right away
-            } else {
-                msg.innerText = `Error: ${data.message}`;
-            }
-        } catch (err) { msg.innerText = "Server connection failed."; }
-    }
-
-    // 3. SECURE CALCULATION (Hits your /math POST route)
-    async function calculateSecure(operation) {
-        const a = document.getElementById('num1').value;
-        const b = document.getElementById('num2').value;
-        const token = localStorage.getItem('token');
-        const display = document.getElementById('result-display');
-        
-        try {
-            const res = await fetch('/math', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` 
-                },
-                body: JSON.stringify({ a: a, b: b, operation: operation })
-            });
-            const data = await res.json();
-            
-            if (res.ok) {
-                display.innerText = `Answer: ${data.result || (data.quotient !== undefined ? `${data.quotient} (Rem:${data.remainder})` : data.result)}`;
-                fetchHistory(); // Refresh the history list
-            } else {
-                display.innerText = `Error: ${data.error || 'Check inputs'}`;
-            }
-        } catch (err) { display.innerText = "Server connection failed."; }
-    }
-
-    // 4. FETCH HISTORY
-    async function fetchHistory() {
-        const token = localStorage.getItem('token');
-        const historyList = document.getElementById('history-list');
-        
-        try {
-            const res = await fetch('/history', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            
-            if (res.ok && data.history) {
-                historyList.innerHTML = data.history.map(item => 
-                    `<div class="history-item">${item.num1} ${item.operation} ${item.num2} = <b>${item.result}</b></div>`
-                ).join('');
-            }
-        } catch (err) { console.error("Could not load history"); }
-    }
-
-    // 5. LOGOUT
-    function logout() {
-        localStorage.removeItem('token');
-        document.getElementById('calc-section').classList.add('hidden');
-        document.getElementById('auth-section').classList.remove('hidden');
-        document.getElementById('username').value = '';
-        document.getElementById('password').value = '';
-        document.getElementById('auth-message').innerText = '';
-    }
-
-    // Check if already logged in on page load
-    window.onload = () => {
-        if (localStorage.getItem('token')) {
-            document.getElementById('auth-section').classList.add('hidden');
-            document.getElementById('calc-section').classList.remove('hidden');
-            fetchHistory();
-        }
-    }
-</script>
 </body>
 </html>
