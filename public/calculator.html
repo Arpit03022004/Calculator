@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>Secret Calculator</h2>
+    <input id="num1" type="number" placeholder="Number A">
+    <input id="num2" type="number" placeholder="Number B">
+    <select id="op">
+        <option value="add">Add</option>
+        <option value="multiply">Multiply</option>
+        <option value="division">division</option>
+
+    </select>
+    <button onclick="calculate()">Calculate</button>
+    <h3 id="result"></h3>
+    <button onclick="logout()">Logout</button>
+
+    <script>
+        async function calculate() {
+            // Get the VIP token from the browser's memory
+            const token = localStorage.getItem('vipToken');
+
+            const response = await fetch('/math', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'authorization': token // Show the bouncer the wristband!
+                },
+                body: JSON.stringify({
+                    a: document.getElementById('num1').value,
+                    b: document.getElementById('num2').value,
+                    operation: document.getElementById('op').value
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('result').innerText = "Result: " + JSON.stringify(data);
+            } else {
+                document.getElementById('result').innerText = "Blocked by bouncer! Please login.";
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('vipToken'); // Destroy the token
+            window.location.href = '/'; // Kick them back to login
+        }
+    </script>
+</body>
+</html>
