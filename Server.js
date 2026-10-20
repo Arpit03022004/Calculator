@@ -25,6 +25,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 mongoose.connect('mongodb://127.0.0.1:27017/calculatorApp').then(()=> console.log("Successfully connected to db"))
 .catch((err)=> console.log("Error is " , err)) ;
 
+app.get('/', (req, res) => {
+    res.send("Calculator Backend is up and running!");
+});
+
 app.listen(3000 , ()=> {
     console.log("Server is running on port 3000");
 })
