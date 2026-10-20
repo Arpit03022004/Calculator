@@ -19,7 +19,9 @@ app.use(express.json());
 
 
 // we use below code to make our paths bulletproof after we encuntered some sort ofbug
-app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 
 mongoose.connect(process.env.MONGO_URI).then(()=> console.log("Successfully connected to db"))

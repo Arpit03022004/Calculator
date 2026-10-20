@@ -1,4 +1,4 @@
-{
+/*{
   "version": 2,
   "builds": [
     {
@@ -11,6 +11,24 @@
     {
       "src": "/(.*)",
       "dest": "Server.js"
+    }
+  ]
+} */
+ {
+  "version": 2,
+  "builds": [
+    {
+      "src": "index.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": "index.html"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "index.js"
     }
   ]
 }
