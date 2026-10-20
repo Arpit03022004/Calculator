@@ -18,17 +18,17 @@
   "version": 2,
   "builds": [
     {
-      "src": "index.js",
+      "src": "Server.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": "index.html"
+        "includeFiles": "Index.html"
       }
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "index.js"
+      "dest": "Server.js"
     }
   ]
 }

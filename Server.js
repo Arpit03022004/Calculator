@@ -20,7 +20,7 @@ app.use(express.json());
 
 // we use below code to make our paths bulletproof after we encuntered some sort ofbug
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'Index.html'));
 });
 
 
