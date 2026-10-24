@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const CalcHistory = require("../models/CalcHistory");
 
-const secretkey = "Arpit-Secret-Key";
+const secretkey = process.env.JWT_SECRET ;
 const bcrypt = require("bcrypt");
 const mongoose = require('mongoose');
 const ratelimit = require("express-rate-limit");

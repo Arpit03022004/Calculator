@@ -1,2 +1,6 @@
 node_modules
 mongodb+srv://bintusingh165_db_user:1Z9JGo6UjXCFbnfE@cluster0.yln9ved.mongodb.net/
+
+.env
+.env.*
+!.env.example

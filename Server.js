@@ -6,8 +6,7 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const User = require('./models/User');
 const CalcHistory = require('./models/CalcHistory');
-
-
+require("dotenv").config();
 const secretkey = process.env.JWT_SECRET ;
 
 
@@ -16,7 +15,7 @@ const secretkey = process.env.JWT_SECRET ;
 app.use(express.json());
 
 
-
+console.log("MONGO_URI loaded:", !!process.env.MONGO_URI);
 
 // we use below code to make our paths bulletproof after we encuntered some sort ofbug
 app.get('/', (req, res) => {
